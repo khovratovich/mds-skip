@@ -1,0 +1,93 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\usepackage{enumitem}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+
+\input{macro.tex}
+
+\title{Bounds on Round Skipping Attacks on the SPN Hash functions}
+\author{Dmitry Khovratovich}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Preliminaries and Notation}
+
+In this section we introduce the SPN notation. Suppose we analyze a permutation-based hash function, where the permutation $\PPP$ is an SPN structure.
+
+Concretely, let $\PPP$ operate on $\FFF^t$ for some integer $t$, where $\FFF$ is a finite field.
+The permutation $\PPP$ is defined as a composition of $r$ rounds, where each round applies a
+sequence of operations:
+\begin{enumerate}
+    \item $\LLL$ -- a linear transformation that applies the matrix $M$ to the state.
+    \item $\SSS$ -- a non-linear substitution layer that applies power mapping $x\rightarrow x^d$ to the state.
+    \item $\CCC_r$ -- a constant addition layer that adds  round constants to the state.
+\end{enumerate}
+We denote the state by $W\in \FFF^t$, concretely the $i$-th round can be expressed as:
+$$
+W_1^{(A)}\xrightarrow{\LLL}W_1^{(B)}\xrightarrow{\SSS}W_1^{(C)}\xrightarrow{\CCC_r}W_2^{(A)}
+$$
+
+
+\section{Main Results}
+
+
+\begin{definition}
+    A \emph{  truncated differential} is a pair of matrices $(\mathbf{A},\mathbf{B})\in(\FFF^r)^2$ such that
+\begin{enumerate}
+    \item $
+    \mathbf{A} \xrightarrow{\LLL}\mathbf{B}
+    $;
+    \item Matrix $\mathbf{B}$ is a diagonal one.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}
+    A $m$-round \emph{truncated differential   trail} is a sequence of compatible   truncated differentials $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^m$,
+    i.e.
+for every $j$   $A_i[j,*]=\mathbf{0}$ if and only if $B_i[j,j]=0$. The $j$ values that correspond to the non-zero rows of $A_i$ are called
+the \emph{active elements}.
+ \end{definition}
+
+ \begin{definition}   A $m$-round \emph{skipping  trail} is a truncated differential   trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^m$,
+   where for every $i$ from $1$ to $m-1$,  there exists a decomposition of
+   the active elements of $\mathbf{B}_i$ into two equally-sized groups $L_i$ and $R_i$, such that the trail,
+   now in the form $\{(\mathbf{A}_{i,L},\mathbf{A}_{i,R},\mathbf{B}_{i,L},\mathbf{B}_{i,R})\}_{i=1}^m$ satisfies the following conditions:
+   $$
+\frac{\mathbf{B}_{i,R}^d}{\mathbf{B}_{i,L}^d}\circ \mathbf{A}_{i+1,L} = \mathbf{A}_{i+1,R}
+    $$
+    where the division of diagonal matrices is defined as the element-wise division of the diagonal elements.
+ \end{definition}
+
+\begin{theorem}
+    Suppose there is a $m$-round skipping trail such that for some subset $I$ of state elements we have $A_1[I,*]=\mathbf{0}$, and the total number of active elements in the
+    first $m-1$ rounds is $k<t$. If there exists a sequence of states $\{W_i^{A,B,C}\}_{i=1}^m$ such that for every $i$ from $1$ to $m-1$ we have
+    \begin{equation}
+        \mathbf{B}_{i,L}\cdot W_{i,R}^{(B)} = \mathbf{B}_{i,R}\cdot W_{i,L}^{(B)}\label{eq:skipping}
+    \end{equation}
+    Then the truncated differential trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^m$ is a valid truncated differential trail,
+    and the probability of the truncated differential is at least $p^{-k/2}$. Moreover,   it holds
+    \begin{equation}
+        \{\PPP^m(W_1^A+\mathbf{A}_1\cdot\mathbf{X})\}_{\mathbf{X}\in\FFF^t} =  \{W_m^C+\mathbf{B}_m\cdot\mathbf{Y}\}_{\mathbf{Y\in\FFF^t}}\label{eq:skipping2}
+    \end{equation}
+\end{theorem}
+\begin{proof}
+    TODO (just apply the definition of skipping trail and the condition \ref{eq:skipping} to get \ref{eq:skipping2}).
+\end{proof}
+
+
+\begin{proposition}
+    If the linear transformation $\LLL$ is MDS, then a 2-round skipping trail cannot exist.
+\end{proposition}
+
+\begin{remark}
+   Two rounds of an MDS-based SPN structure can potentially be skipped if the differential for the first round is relaxed.
+\end{remark}
+
+\end{document}
