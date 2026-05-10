@@ -96,20 +96,23 @@ $$
 
 
 \begin{definition}
+    A set $\mathcal{W}\subseteq\FFF^t$ \emph{satisfies the matrix differential~$\mathbf{A}$}, centered at $W_0\in\FFF^t$, if
+    \[
+        \mathcal{W} = \bigl\{\,W_0 + \mathbf{A}\cdot\mathbf{X} : \mathbf{X}\in\FFF^t\,\bigr\}.
+    \]
+    We call $\mathcal{W}$ a \emph{differential coset} of~$\mathbf{A}$.
+\end{definition}
+
+\begin{definition}
     A \emph{truncated differential} is a pair of matrices $(\mathbf{A},\mathbf{B})\in(\FFF^{t\times t})^2$ such that
 \begin{enumerate}
-    \item $\mathbf{A} \xrightarrow{\LLL}\mathbf{B}$, i.e.\ the image of each column of $\mathbf{A}$ under $\LLL$ contributes to the corresponding column of $\mathbf{B}$;
+    \item $\mathbf{A} \xrightarrow{\LLL}\mathbf{B}$, i.e.\ for every differential coset $\mathcal{W}$ of $\mathbf{A}$, its image $\LLL(\mathcal{W})$ is a differential coset of~$\mathbf{B}$;
     \item Matrix $\mathbf{B}$ is diagonal.
 \end{enumerate}
 The indices $j$ with a non-zero $j$-th row of $\mathbf{A}$ (equivalently, non-zero $j$-th diagonal entry of $\mathbf{B}$) are called the \emph{active positions}.
 \end{definition}
 
 \begin{definition}
-    A set $\mathcal{W}\subseteq\FFF^t$ \emph{satisfies the matrix differential~$\mathbf{A}$}, centered at $W_0\in\FFF^t$, if
-    \[
-        \mathcal{W} = \bigl\{\,W_0 + \mathbf{A}\cdot\mathbf{X} : \mathbf{X}\in\FFF^t\,\bigr\}.
-    \]
-    We call $\mathcal{W}$ a \emph{differential coset} of~$\mathbf{A}$.
     A diagonal matrix~$\mathbf{B}$ is \emph{$\SSS$-compatible} with a matrix~$\mathbf{A}'$
     if there exist differential cosets $\mathcal{W}^{(B)}$ of~$\mathbf{B}$ and
     $\mathcal{W}^{(A)}$ of~$\mathbf{A}'$ such that
@@ -140,7 +143,7 @@ and directly jump to the state after the $m$-th round. The following theorem for
 \section{Theoretical Bounds on Round Skipping}
 \label{sec:bounds}
 
-\begin{theorem}
+\begin{theorem}\label{thm:skipping}
     Suppose there is a $m$-round skipping trail such that for some subset $I$ of state elements we have $A_1[I,*]=\mathbf{0}$, and
      the total number of active elements
      is $k<2t$. If there exists a sequence of states $\{W_i^{A,B,C}\}_{i=1}^{m+1}$ such that for every $i$ from $1$ to $m$ we have
@@ -155,6 +158,28 @@ and directly jump to the state after the $m$-th round. The following theorem for
 \end{theorem}
 \begin{proof}
     TODO (just apply the definition of skipping trail and the condition \ref{eq:skipping} to get \ref{eq:skipping2}).
+\end{proof}
+
+\begin{corollary}[$\CICO$ degree reduction]\label{cor:cico}
+    Let $m\leq R_F$ and suppose there exists an $m$-round skipping trail
+    $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$.
+    Suppose the $\CICO$ input constraint defines a differential coset of $\mathbf{A}_1$,
+    and let the composition of the remaining $s = R - m$ rounds of $\PPP$,
+    viewed as a function of the state at the beginning of round $m+1$,
+    be expressed by polynomials of degree at most $D$ over $\FFF$.
+    Then the $\CICO$ problem reduces to a system of polynomial equations of
+    degree at most $D$.
+\end{corollary}
+\begin{proof}
+    By Theorem~\ref{thm:skipping}, the image of the input differential coset
+    under the first $m$ rounds is the differential coset
+    $\{W_{m+1}^C + \mathbf{B}_{m+1}\cdot\mathbf{Y}\}_{\mathbf{Y}\in\FFF^t}$.
+    The remaining $s$ rounds are a polynomial map of degree $D$ applied to this
+    affine family; substituting the parameterization by $\mathbf{Y}$ turns the
+    $\CICO$ output constraints into polynomial equations in $\mathbf{Y}$ of
+    degree at most $D$.
+    (The number of free variables equals the rank of $\mathbf{B}_{m+1}$, i.e.
+    the number of active positions of $\mathbf{A}_{m+1}$.)
 \end{proof}
 
 \begin{proposition}
