@@ -16,6 +16,12 @@
 \begin{document}
 \maketitle
 
+\begin{frame}[c]{}
+\begin{center}
+\Large{Round skipping: new hope}
+\end{center}
+\end{frame}
+
 \begin{frame}{Recent attack}
     \includegraphics[width=\textwidth]{images/att1.jpg}
     By spending $4$ degrees of freedom per round, the attack
@@ -30,12 +36,14 @@ truncated differential.
 \end{frame}
 
 \begin{frame}{Upper bounds on the round number skipped}
- We show that all round skipping attacks reduce to two conditions:
+ Ongoing research: we show that all round skipping attacks reduce to two conditions:
  \begin{itemize}
-        \item Existence of a truncated differential trail with few active S-boxes.
+        \item Existence of a truncated differential trail with few active S-boxes,
+        and of a regular differential trail with at least that many S-boxes.
         \item  Existence of a sequence of states satisfying certain algebraic conditions (proportional
         to the number of active S-boxes).
     \end{itemize}
+Parallels to the rebound attack on AES.
 \begin{theorem}(Informal) A trail skipping $m$ rounds of an SPN structure with $t$ state elements
     and branch number $b$ must satisfy the following conditions:
     $$
@@ -49,21 +57,34 @@ truncated differential.
 \end{proposition}
 
 \begin{remark}
-    Four rounds of an MDS-based SPN structure can potentially be skipped
-    if the differential for the first round is relaxed.
+    3-round skipping trails for MDS-based SPN structures are yet to be discovered,
+    but we can upper bound the dimension of the solution space already now.
 \end{remark}
 
 \end{frame}
 
+
+\begin{frame}[c]{}
+\begin{center}
+\Large{Bounty program and prizes}
+\end{center}
+\end{frame}
+
+
 \begin{frame}{Bounty program 2026}
-   Bounty program consists of the following parts:
+   Bounty program will consist of the following parts:
     \begin{itemize}
         \item CICO problem for round-reduced Poseidon1-KoalaBear;
         \item Density challenge (break as many rounds as possible);
         \item Zero-test challenge (break as many rounds as possible);
         \item Multi-target collision challenge (break as many rounds as possible);
-        \item Ultimate prize: Partial Poseidon1 collisions. Collide on as many field elements as possible.
+        \item \textsc{Ultimate prize}: Partial Poseidon1 collisions.
+        Collide on as many output field elements as possible.
     \end{itemize}
+
+    Concrete instances of the challenges will be published Tuesday March 24th at
+    \url{https://poseidon-initiative.info}. They will
+    have a short seed to prefix all hash inputs (!).
 \end{frame}
 
 
@@ -118,9 +139,20 @@ Challenge: find $x\neq y\in\mathbb{F}^r$ such that
 (b_0,b_1,\ldots,b_{\ell-1}) &:=H(y) \\
 a_i &= b_i ,\; i=0,1,\ldots,t-1.
 \end{align}
-
+\item \textbf{Ultimate prize:} Collision on $t$ field elements,
+the total prize fund is close to \$1M.
 \end{itemize}
 
+
+
 \end{frame}
+
+
+\begin{frame}[c]{}
+\begin{center}
+\Large{Questions?}
+\end{center}
+\end{frame}
+
 
 \end{document}

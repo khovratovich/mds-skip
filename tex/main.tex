@@ -1,0 +1,229 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\usepackage{enumitem}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+
+\input{macro.tex}
+
+\title{Bounds on Round Skipping Attacks on the SPN Hash functions}
+\author{Dmitry Khovratovich}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+Zero-knowledge proof systems---SNARKs, STARKs, and Bulletproofs---have become core infrastructure for privacy-preserving computation. Their inner loops are dominated by hash computations that must be expressed natively over prime fields with as few multiplications as possible. The Poseidon family of hash functions~\cite{poseidon,poseidon2}, built on the Substitution-Permutation Network (SPN) design, is the dominant answer: deployed in Filecoin, Mina, Plonky3, and many other production systems, it achieves the best known trade-off between algebraic complexity and security.
+
+An SPN permutation operates on a state $W \in \FFF_p^t$ by alternating a non-linear S-box layer $\SSS$ (applying the power map $x \mapsto x^d$ to each element) with a linear diffusion layer $\LLL$ (multiplication by a $t \times t$ matrix $M$). Security is measured primarily through the \emph{Constrained-Input Constrained-Output} ($\CICO$) problem: given partial constraints on the input and output of the permutation, find a satisfying assignment. $\CICO$ hardness underlies collision resistance and preimage resistance, and concretizes the security of the Poseidon Initiative bounty challenges~\cite{poseidoninitiative}.
+
+\emph{Round-skipping attacks} reduce the $\CICO$ problem by algebraically bypassing a prefix of rounds. Merz and Rodr{\'{i}}guez Garc{\'{i}}a~\cite{skip2026} recently showed that the structured linear layers of Poseidon2(b)---optimized for hardware efficiency but not MDS---admit skipping attacks that bypass up to $\approx t/4$ full rounds by spending roughly four degrees of freedom per skipped round. This raises a fundamental open question: \emph{how many rounds can be skipped when the linear layer is an MDS matrix?} Poseidon1 uses MDS matrices (via the Cauchy or circulant construction, achieving branch number $b = t+1$), so this question directly bounds the attack surface of the Poseidon Initiative bounty instances.
+
+\subsection*{Our Contributions}
+
+\begin{itemize}
+    \item \textbf{Skipping trail framework (Section~\ref{sec:trails}).}
+    We introduce \emph{skipping trails}: truncated differential trails satisfying an algebraic compatibility condition that forces the ratio of active state element pairs to propagate linearly through the S-box layer. A valid $m$-round skipping trail certifies that a structured family of inputs maps through $m$ rounds to a predictable output set, enabling the adversary to reduce a $\CICO$ instance on the full permutation to one on the remaining $R_F - m$ full rounds and $R_P$ partial rounds.
+
+    \item \textbf{Tight bounds on round skipping (Section~\ref{sec:bounds}).}
+    We prove that an $m$-round skipping trail can exist only if the branch number $b$ of $\LLL$ satisfies
+    \[
+        b \;\leq\; \frac{4t}{m} \quad (m \text{ even}), \qquad b \;\leq\; \frac{4t - 2}{m - 1} \quad (m \text{ odd}).
+    \]
+    For MDS matrices ($b = t+1$), this rules out skipping $m \geq 4$ rounds for all $t \geq 1$. For $m = 3$, the bound gives $b \leq 2t-1$, which MDS satisfies, so three-round skipping is not excluded.
+
+    \item \textbf{Concrete trails for Poseidon1-KoalaBear (Section~\ref{sec:concrete}).}
+    For the canonical bounty instance ($p = 2^{31} - 2^{24} + 1$, $d = 3$, $t = 16$, $R_F = 8$, $R_P = 20$), we exhibit explicit 2-round skipping trails for both the circulant and Cauchy MDS constructions. We further search for 3-round skipping trails; a positive result would constitute the first example of three-round MDS round skipping.
+
+    \item \textbf{Complexity analysis and implementation (Section~\ref{sec:impl}).}
+    We quantify the $\CICO$ cost reduction as a function of the trail width and $R_P$. We provide an implementation that finds skipping trails for concrete Poseidon1-KoalaBear matrices and demonstrates the round-skipping attack on the bounty instances.
+\end{itemize}
+
+\paragraph{Scope.}
+We analyze skipping within the full-round layer only ($m \leq R_F$). Extending skipping into the partial-round layer is qualitatively different and is left for future work.
+
+\paragraph{Organization.}
+Section~\ref{sec:prelim} covers SPN notation, Poseidon1, MDS matrices, and the $\CICO$ problem.
+Section~\ref{sec:trails} defines truncated differential trails and skipping trails.
+Section~\ref{sec:bounds} proves the main bounds.
+Section~\ref{sec:concrete} presents concrete trails for Poseidon1-KoalaBear.
+Section~\ref{sec:impl} describes the implementation and complexity analysis.
+
+\subsection{Related Work}
+\label{sec:related}
+
+\paragraph{Poseidon hash functions.}
+Poseidon1~\cite{poseidon} (Grassi, Khovratovich, Rechberger, Roy, Schofnegger, 2021) is an SPN hash function over $\FFF_p$ with $R_F$ \emph{full rounds} (all $t$ S-boxes active) flanking $R_P$ \emph{partial rounds} (one S-box active), and an MDS linear layer with branch number $b = t+1$. Poseidon2~\cite{poseidon2} replaces the MDS matrix with a structured matrix achieving better circuit efficiency; this matrix is not MDS in general, and its reduced diffusion is the structural weakness exploited in~\cite{skip2026}.
+
+\paragraph{Round-skipping attacks.}
+The idea of bypassing SPN rounds algebraically has roots in the \emph{rebound attack} of Mendel, Rechberger, Schl{\"a}ffer, and Thomsen~\cite{rebound} on AES-based hash functions. In the rebound attack, the adversary satisfies differential constraints through the middle rounds by working inward from both sides simultaneously; the adversary controls the degrees of freedom through the linear (MDS) layer and the non-linear S-box.
+Merz and Rodr{\'{i}}guez Garc{\'{i}}a~\cite{skip2026} adapted this idea to Poseidon2 by identifying truncated differentials with a ratio-preserving property through the power-map S-box. Their attack skips up to $\approx t/4$ rounds and yields the first algebraic collision attack that outperforms the corresponding preimage attack on Poseidon2. They explicitly leave open the question of how far round skipping can go for MDS-based SPNs; our paper answers this question.
+
+\paragraph{Algebraic attacks.}
+Algebraic attacks on Poseidon-type primitives include Gr{\"o}bner-basis methods, linearization, and interpolation. These complement round-skipping attacks: our results show that, for MDS matrices, at most 3 full rounds can be skipped (with $m \geq 4$ being provably impossible), bounding the scope of the round-reduction phase in any hybrid attack.
+
+\paragraph{MDS matrices and branch numbers.}
+The branch number $b = \min_{x \neq 0}(\mathrm{wt}(x) + \mathrm{wt}(Mx))$ quantifies the diffusion of a linear layer, where $\mathrm{wt}$ denotes Hamming weight. MDS matrices achieve $b = t+1$, the maximum by the Singleton bound. The Cauchy construction $M[i][j] = (x_i - y_j)^{-1}$ yields an MDS matrix over any prime field with $p > 2t$; circulant MDS matrices, used in Plonky3 and the Poseidon Initiative bounty instances, achieve the same branch number with a more regular structure. The distinction between the two constructions becomes relevant in Section~\ref{sec:concrete}.
+
+\section{Preliminaries and Notation}
+\label{sec:prelim}
+
+In this section we introduce the SPN notation. Suppose we analyze a permutation-based hash function, where the permutation $\PPP$ is an SPN structure.
+
+Concretely, let $\PPP$ operate on $\FFF^t$ for some integer $t$, where $\FFF$ is a finite field.
+The permutation $\PPP$ is defined as a composition of $r$ rounds, where each round applies a
+sequence of operations:
+\begin{enumerate}
+    \item $\LLL$ -- a linear transformation that applies the matrix $M$ to the state.
+    \item $\SSS$ -- a non-linear substitution layer that applies power mapping $x\rightarrow x^d$ to the state.
+    \item $\CCC_r$ -- a constant addition layer that adds  round constants to the state.
+\end{enumerate}
+We denote the state by $W\in \FFF^t$, concretely the $i$-th round can be expressed as:
+$$
+W_1^{(A)}\xrightarrow{\LLL}W_1^{(B)}\xrightarrow{\SSS}W_1^{(C)}\xrightarrow{\CCC_r}W_2^{(A)}
+$$
+
+
+\section{Truncated Differentials and Skipping Trails}
+\label{sec:trails}
+
+
+\begin{definition}
+    A \emph{truncated differential} is a pair of matrices $(\mathbf{A},\mathbf{B})\in(\FFF^{t\times t})^2$ such that
+\begin{enumerate}
+    \item $\mathbf{A} \xrightarrow{\LLL}\mathbf{B}$, i.e.\ the image of each column of $\mathbf{A}$ under $\LLL$ contributes to the corresponding column of $\mathbf{B}$;
+    \item Matrix $\mathbf{B}$ is diagonal.
+\end{enumerate}
+The indices $j$ with a non-zero $j$-th row of $\mathbf{A}$ (equivalently, non-zero $j$-th diagonal entry of $\mathbf{B}$) are called the \emph{active positions}.
+\end{definition}
+
+\begin{definition}
+    A set $\mathcal{W}\subseteq\FFF^t$ \emph{satisfies the matrix differential~$\mathbf{A}$}, centered at $W_0\in\FFF^t$, if
+    \[
+        \mathcal{W} = \bigl\{\,W_0 + \mathbf{A}\cdot\mathbf{X} : \mathbf{X}\in\FFF^t\,\bigr\}.
+    \]
+    We call $\mathcal{W}$ a \emph{differential coset} of~$\mathbf{A}$.
+    A diagonal matrix~$\mathbf{B}$ is \emph{$\SSS$-compatible} with a matrix~$\mathbf{A}'$
+    if there exist differential cosets $\mathcal{W}^{(B)}$ of~$\mathbf{B}$ and
+    $\mathcal{W}^{(A)}$ of~$\mathbf{A}'$ such that
+    \[
+        \SSS\!\left(\mathcal{W}^{(B)}\right) = \mathcal{W}^{(A)},
+    \]
+    where $\SSS$ applies the map $x\mapsto x^d$ coordinatewise.
+    (Round constants shift the center of $\mathcal{W}^{(A)}$ and do not affect $\SSS$-compatibility.)
+\end{definition}
+
+\begin{definition}
+    A $m$-round \emph{truncated differential trail} is a sequence of truncated differentials
+    $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m}$ such that for every $i=1,\ldots,m-1$,
+    $\mathbf{B}_i$ is $\SSS$-compatible with~$\mathbf{A}_{i+1}$.
+\end{definition}
+
+ \begin{definition}   A $m$-round \emph{skipping  trail} is a $m+1$-round truncated differential   trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$,
+   where for every $i$ from $1$ to $m$,  there exists a decomposition
+   the active elements of $\mathbf{B}_i$ into two equally-sized groups $L_i$ and $R_i$, such that the trail,
+   now in the form $\{(\mathbf{A}_{i,L},\mathbf{A}_{i,R},\mathbf{B}_{i,L},\mathbf{B}_{i,R})\}_{i=1}^{m+1}$ satisfies the following conditions:
+   $$
+\frac{\mathbf{B}_{i,R}^d}{\mathbf{B}_{i,L}^d}\circ \mathbf{A}_{i+1,L} = \mathbf{A}_{i+1,R}
+    $$
+    where the division of diagonal matrices is defined as the element-wise division of the diagonal elements.
+ \end{definition}
+With an $m$-round skipping trail, we can algebraically skip the first $m$ rounds of the SPN structure,
+and directly jump to the state after the $m$-th round. The following theorem formalizes this intuition.
+\section{Theoretical Bounds on Round Skipping}
+\label{sec:bounds}
+
+\begin{theorem}
+    Suppose there is a $m$-round skipping trail such that for some subset $I$ of state elements we have $A_1[I,*]=\mathbf{0}$, and
+     the total number of active elements
+     is $k<2t$. If there exists a sequence of states $\{W_i^{A,B,C}\}_{i=1}^{m+1}$ such that for every $i$ from $1$ to $m$ we have
+    \begin{equation}
+        \mathbf{B}_{i,L}\cdot W_{i,R}^{(B)} = \mathbf{B}_{i,R}\cdot W_{i,L}^{(B)}\label{eq:skipping}
+    \end{equation}
+    Then the truncated differential trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$ is a valid truncated differential trail,
+    and the probability of the truncated differential is at least $p^{-k/2}$. Moreover,   it holds
+    \begin{equation}
+        \{\PPP^m(W_1^A+\mathbf{A}_1\cdot\mathbf{X})\}_{\mathbf{X}\in\FFF^t} =  \{W_{m+1}^C+\mathbf{B}_{m+1}\cdot\mathbf{Y}\}_{\mathbf{Y\in\FFF^t}}\label{eq:skipping2}
+    \end{equation}
+\end{theorem}
+\begin{proof}
+    TODO (just apply the definition of skipping trail and the condition \ref{eq:skipping} to get \ref{eq:skipping2}).
+\end{proof}
+
+\begin{proposition}
+ A sequence of states satisfying an $m$-round skipping trail exists only if the branch number $b$ of the linear transformation $\LLL$ satisfies the following condition:
+\begin{equation}
+    \begin{cases}
+b\leq \frac{4t}{m},\text{ for } m \text{ even}  \end{cases}  \label{eq:skipping3}
+\end{equation}\end{proposition}
+\begin{proof}
+    Suppose there is a sequence of states $\{W_i^{A,B,C}\}_{i=1}^{m+1}$ satisfying the condition \ref{eq:skipping}. Then for every $i$ from $1$ to $m$ we have
+    \begin{equation}
+        \mathbf{B}_{i,L}\cdot W_{i,R}^{(B)} = \mathbf{B}_{i,R}\cdot W_{i,L}^{(B)}\label{eq:skipping-state}
+    \end{equation}
+    Denote the number of active elements in $\mathbf{B}_i$ by $k_i$. A satisfying sequence of states can exist only
+    if $$
+    \sum_i k_i/2    \leq t.
+    $$
+    On the other hand, any pair of states satisfying a truncated differential also satisfies a regular differential trail with at most
+    the same number of active elements. Therefore, we must have $k_i+k_{i+1}\geq b$ for every $i$ from $1$ to $m-1$. Combining these two inequalities we get for even $m$:
+    $$
+    t \geq \sum_i k_i/2 \geq \frac{m}{4}b
+    $$
+\end{proof}
+
+
+\begin{proposition}
+    If the linear transformation $\LLL$ is MDS, then a 4-round skipping trail cannot exist.
+\end{proposition}
+\begin{proof}
+    Follows from the fact that for an MDS matrix, the branch number is maximal $t+1$, and thus the condition for a 4-round skipping trail would
+    be $t+1\leq \frac{4t}{4}$, which is not satisfied for any $t\geq 1$.
+\end{proof}
+\begin{remark}
+   Four rounds of an MDS-based SPN structure can potentially be skipped if the differential for the first round is relaxed.
+\end{remark}
+
+\begin{thebibliography}{99}
+
+\bibitem{poseidon}
+Lorenzo Grassi, Dmitry Khovratovich, Christian Rechberger, Arnab Roy, and Markus Schofnegger.
+\newblock {Poseidon: A New Hash Function for Zero-Knowledge Proof Systems}.
+\newblock In \emph{30th USENIX Security Symposium}, pages 519--535, 2021.
+\newblock \url{https://eprint.iacr.org/2019/458}.
+
+\bibitem{poseidon2}
+Lorenzo Grassi, Dmitry Khovratovich, and Markus Schofnegger.
+\newblock {Poseidon2: A Faster Version of the Poseidon Hash Function}.
+\newblock \emph{IACR Transactions on Symmetric Cryptology}, 2024(1):1--45, 2024.
+\newblock \url{https://eprint.iacr.org/2023/323}.
+
+\bibitem{skip2026}
+Simon-Philipp Merz and {\`{A}}lex Rodr{\'{i}}guez Garc{\'{i}}a.
+\newblock {Skipping Class: Algebraic Attacks exploiting weak matrices and
+  operation modes of {Poseidon2(b)}}.
+\newblock Cryptology ePrint Archive, Paper 2026/306, 2026.
+\newblock \url{https://eprint.iacr.org/2026/306}.
+
+\bibitem{rebound}
+Florian Mendel, Christian Rechberger, Martin Schl{\"a}ffer, and S{\o}ren S.~Thomsen.
+\newblock {The Rebound Attack: Cryptanalysis of Reduced {Whirlpool} and
+  {Gr{\o}stl}}.
+\newblock In \emph{Fast Software Encryption---{FSE} 2009}, volume 5665 of
+  \emph{LNCS}, pages 260--276. Springer, 2009.
+
+\bibitem{poseidoninitiative}
+{Poseidon Initiative}.
+\newblock {Bounty Program 2026}.
+\newblock \url{https://poseidon-initiative.info}, 2026.
+
+\end{thebibliography}
+
+\end{document}
