@@ -75,20 +75,70 @@ The branch number $b = \min_{x \neq 0}(\mathrm{wt}(x) + \mathrm{wt}(Mx))$ quanti
 \section{Preliminaries and Notation}
 \label{sec:prelim}
 
-In this section we introduce the SPN notation. Suppose we analyze a permutation-based hash function, where the permutation $\PPP$ is an SPN structure.
+\subsection{SPN Permutations}
 
-Concretely, let $\PPP$ operate on $\FFF^t$ for some integer $t$, where $\FFF$ is a finite field.
-The permutation $\PPP$ is defined as a composition of $r$ rounds, where each round applies a
-sequence of operations:
+Let $\FFF = \FFF_p$ be a prime field and $t \geq 2$ an integer. An \emph{SPN permutation} $\PPP$ operates on the state $W \in \FFF^t$ as a composition of $R$ rounds. Each round $i$ applies three operations in sequence:
 \begin{enumerate}
-    \item $\LLL$ -- a linear transformation that applies the matrix $M$ to the state.
-    \item $\SSS$ -- a non-linear substitution layer that applies power mapping $x\rightarrow x^d$ to the state.
-    \item $\CCC_r$ -- a constant addition layer that adds  round constants to the state.
+    \item $\LLL$ — a linear transformation that multiplies the state by a fixed matrix $M \in \FFF^{t \times t}$;
+    \item $\SSS$ — a non-linear substitution layer that applies the power map $x \mapsto x^d$ coordinate-wise;
+    \item $\CCC_i$ — a constant-addition layer that adds a round-specific vector of constants to the state.
 \end{enumerate}
-We denote the state by $W\in \FFF^t$, concretely the $i$-th round can be expressed as:
-$$
-W_1^{(A)}\xrightarrow{\LLL}W_1^{(B)}\xrightarrow{\SSS}W_1^{(C)}\xrightarrow{\CCC_r}W_2^{(A)}
-$$
+We write the $i$-th round as
+\[
+    W_i^{(A)}\xrightarrow{\LLL}W_i^{(B)}\xrightarrow{\SSS}W_i^{(C)}\xrightarrow{\CCC_i}W_{i+1}^{(A)}.
+\]
+Here $W_i^{(A)}$ is the state at the beginning of round $i$ (after constants of round $i-1$), $W_i^{(B)}$ is the state after the linear layer, and $W_i^{(C)}$ is the state after the S-box layer.
+
+\subsection{The CICO Problem}
+
+The primary security notion for SPN-based hash functions is the \emph{Constrained-Input Constrained-Output} ($\CICO$) problem.
+
+\begin{definition}[$\CICO$]
+    Given an SPN permutation $\PPP : \FFF^t \to \FFF^t$ and affine constraints
+    \[
+        \mathcal{C}_{\mathrm{in}} \subseteq \FFF^t, \quad \mathcal{C}_{\mathrm{out}} \subseteq \FFF^t,
+    \]
+    find $W \in \mathcal{C}_{\mathrm{in}}$ such that $\PPP(W) \in \mathcal{C}_{\mathrm{out}}$, or determine that no such $W$ exists.
+\end{definition}
+
+The $\CICO$ problem underlies collision and preimage resistance of Poseidon-based hash functions. Concretely, fixing the capacity elements of the input and output yields a collision; fixing the output fully yields a preimage. The Poseidon Initiative bounty challenges~\cite{poseidoninitiative} are cast as $\CICO$ instances.
+
+\subsection{Poseidon1}
+\label{sec:poseidon1}
+
+Poseidon1~\cite{poseidon} is an SPN permutation over $\FFF_p^t$ with a \emph{mixed-round} structure: it consists of $R_F$ \emph{full rounds}, in which the S-box layer is applied to all $t$ state elements, flanking $R_P$ \emph{partial rounds}, in which only one designated element is cubed. Concretely, the round schedule is $R_F/2$ full rounds, followed by $R_P$ partial rounds, followed by $R_F/2$ full rounds; the total number of rounds is $R = R_F + R_P$.
+
+The canonical bounty instance over the KoalaBear field uses the parameters
+\[
+    p = 2^{31} - 2^{24} + 1, \quad d = 3, \quad t = 16, \quad R_F = 8, \quad R_P = 20.
+\]
+
+\paragraph{Scope.}
+This paper analyzes round skipping within the full-round layers only ($m \leq R_F$). Extending skipping into the partial-round layer is qualitatively different and is left for future work.
+
+\subsection{MDS Matrices and Branch Number}
+\label{sec:mds}
+
+\begin{definition}[Branch number]
+    The \emph{branch number} of a linear map $\LLL$ with matrix $M$ is
+    \[
+        b(M) = \min_{x \neq 0}\bigl(\mathrm{wt}(x) + \mathrm{wt}(Mx)\bigr),
+    \]
+    where $\mathrm{wt}(v)$ denotes the Hamming weight (number of non-zero coordinates) of $v \in \FFF^t$.
+\end{definition}
+
+\begin{definition}[MDS matrix]
+    A matrix $M \in \FFF^{t \times t}$ is \emph{MDS} (Maximum Distance Separable) if $b(M) = t + 1$, the maximum allowed by the Singleton bound.
+\end{definition}
+
+An equivalent characterization: $M$ is MDS if and only if every square submatrix of $M$ is non-singular.
+
+Two MDS constructions appear in deployed instances of Poseidon1.
+\begin{itemize}
+    \item \textbf{Cauchy MDS.} For distinct elements $x_1,\ldots,x_t,y_1,\ldots,y_t \in \FFF_p$ with $x_i \neq y_j$ for all $i,j$, the matrix $M[i][j] = (x_i - y_j)^{-1}$ is MDS over any prime field $p > 2t$.
+    \item \textbf{Circulant MDS.} A circulant matrix $M$ defined by its first row $(c_0, c_1, \ldots, c_{t-1})$ with $M[i][j] = c_{(j-i) \bmod t}$ is MDS for specific choices of $(c_0,\ldots,c_{t-1})$ depending on $p$ and $t$. The Poseidon Initiative bounty instances and Plonky3 use circulant MDS matrices.
+\end{itemize}
+Both constructions achieve $b = t + 1$; the distinction becomes relevant in Section~\ref{sec:concrete}.
 
 
 \section{Truncated Differentials and Skipping Trails}

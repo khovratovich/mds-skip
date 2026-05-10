@@ -60,3 +60,8 @@ Each entry records the user's command verbatim and a summary of the agent's resp
 
 ### [12] 2026-05-10 — "Add to an appropriate phase another proposition that follows from the main theorem, which says that if we skip m rounds, and next s rounds are described by function of degree D, and the CICO input condition is compatible with matrix A1 from the skipping trail, then the CICO problem is reduced to a system of equations of degree D"
 **Action**: Added `\label{thm:skipping}` to the main theorem. Added Corollary (cor:cico, "CICO degree reduction") immediately after the theorem proof: if the CICO input constraint defines a differential coset of A_1, and the remaining s = R−m rounds are polynomial of degree ≤ D, then CICO reduces to a degree-D polynomial system. Proof: by Theorem thm:skipping the m-round image is a coset of B_{m+1}, parameterized by Y; the remaining rounds give degree-D equations in Y. Updated plan (Phase 4 step 8b). Compiled cleanly.
+
+---
+
+### [13] 2026-05-10 — "yes"
+**Action**: Phase 2 — expanded §2 Preliminaries into four subsections: §2.1 SPN Permutations (formal round diagram with A/B/C state notation); §2.2 CICO Problem (definition + role in Poseidon security + bounty context); §2.3 Poseidon1 (mixed-round structure, KoalaBear bounty parameters p=2130706433/d=3/t=16/R_F=8/R_P=20, scope paragraph); §2.4 MDS Matrices and Branch Number (two definitions: branch number and MDS; submatrix characterization; Cauchy and circulant constructions). Compiled cleanly.
