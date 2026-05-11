@@ -305,19 +305,90 @@ this and Section~\ref{sec:bounds} derives tight bounds on how large $m$ can be.
 \begin{theorem}\label{thm:skipping}
     Let $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$ be an $m$-round skipping trail
     with propagating centers $\{W_i^{(A)},W_i^{(B)},W_i^{(C)}\}$.
-    Suppose that for every $i$ from $1$ to $m$, for every column $j$ of $\mathbf{B}_i$
-    with arity-2 pair $(\ell_j,r_j)$, the following \emph{ratio condition} holds:
-    \begin{equation}\label{eq:ratio}
-        \left(\frac{\mathbf{B}_i[r_j,j]}{\mathbf{B}_i[\ell_j,j]}\right)^{\!d}
-        \mathbf{A}_{i+1}[\ell_j,\,:] \;=\; \mathbf{A}_{i+1}[r_j,\,:].
-    \end{equation}
-    Then it holds that
-    \begin{equation}
-        \{\PPP^m(W_1^{(A)}+\mathbf{A}_1\cdot\mathbf{X})\}_{\mathbf{X}\in\FFF^k} =  \{W_{m+1}^{(C)}+\mathbf{B}_{m+1}\cdot\mathbf{Y}\}_{\mathbf{Y}\in\FFF^k}\label{eq:skipping2}
+    For every $i\in\{1,\ldots,m\}$ and every column $j$ of $\mathbf{B}_i$
+    with arity-2 pair $(\ell_j,r_j)$, denote $\rho_{i,j}=\mathbf{B}_i[r_j,j]/\mathbf{B}_i[\ell_j,j]$
+    and suppose:
+    \begin{enumerate}[label=(\roman*)]
+        \item \emph{Matrix ratio condition:}
+        \begin{equation}\label{eq:ratio}
+            \rho_{i,j}^d\,\mathbf{A}_{i+1}[\ell_j,\,:]\;=\;\mathbf{A}_{i+1}[r_j,\,:];
+        \end{equation}
+        \item \emph{State ratio condition:}
+        \begin{equation}\label{eq:state-ratio}
+            W_i^{(B)}[r_j]\;=\;\rho_{i,j}\,W_i^{(B)}[\ell_j].
+        \end{equation}
+    \end{enumerate}
+    Then
+    \begin{equation}\label{eq:skipping2}
+        \bigl\{\,\PPP^m\bigl(W_1^{(A)}+\mathbf{A}_1\cdot\mathbf{X}\bigr)\,\bigr\}_{\mathbf{X}\in\FFF^k}
+        \;=\;
+        \bigl\{\,W_{m+1}^{(A)}+\mathbf{A}_{m+1}\cdot\mathbf{X}'\,\bigr\}_{\mathbf{X}'\in\FFF^k}.
     \end{equation}
 \end{theorem}
 \begin{proof}
-    TODO (apply the definition of skipping trail and the ratio condition~\eqref{eq:ratio} to get~\eqref{eq:skipping2}).
+    We prove by induction on $i\in\{1,\ldots,m\}$ that after $i$ full rounds the image of
+    $\{W_1^{(A)}+\mathbf{A}_1\mathbf{X}\}_{\mathbf{X}\in\FFF^k}$ equals
+    $\{W_{i+1}^{(A)}+\mathbf{A}_{i+1}\mathbf{X}'\}_{\mathbf{X}'\in\FFF^k}$
+    for a bijective reparameterization on $\FFF^k$.
+
+    \textit{Inductive step.}
+    Assume the image after $i-1$ rounds is $\{W_i^{(A)}+\mathbf{A}_i\mathbf{X}\}$
+    (the base case $i=1$ is the hypothesis).
+
+    \textit{Linear layer.}
+    Since $(\mathbf{A}_i,\mathbf{B}_i)$ is a truncated differential,
+    $\mathrm{Im}(M\mathbf{A}_i)=\mathrm{Im}(\mathbf{B}_i)$, so
+    $M\mathbf{A}_i=\mathbf{B}_i\mathbf{T}_i$ for an invertible $\mathbf{T}_i\in\FFF^{k\times k}$.
+    With $\mathbf{Y}=\mathbf{T}_i\mathbf{X}$:
+    \[
+        \LLL\bigl(\{W_i^{(A)}+\mathbf{A}_i\mathbf{X}\}\bigr)
+        = \{W_i^{(B)}+\mathbf{B}_i\mathbf{Y}\}.
+    \]
+
+    \textit{S-box layer.}
+    Let $v=W_i^{(B)}+\mathbf{B}_i\mathbf{Y}$.
+    Since $\mathbf{B}_i$ is arity-2, for column $j$ with pair $(\ell_j,r_j)$
+    and $b_j=\mathbf{B}_i[\ell_j,j]$:
+    \[
+        v[\ell_j]=W_i^{(B)}[\ell_j]+b_j Y_j,\qquad
+        v[r_j]  =W_i^{(B)}[r_j]+\rho_{i,j}\,b_j Y_j.
+    \]
+    By the state ratio condition~\eqref{eq:state-ratio},
+    $W_i^{(B)}[r_j]=\rho_{i,j}W_i^{(B)}[\ell_j]$, hence
+    $v[r_j]=\rho_{i,j}\,v[\ell_j]$.
+    Setting $Z_j=v[\ell_j]^d-W_i^{(C)}[\ell_j]$ and using
+    $W_i^{(C)}[r_j]=(\rho_{i,j}W_i^{(B)}[\ell_j])^d=\rho_{i,j}^d W_i^{(C)}[\ell_j]$:
+    \[
+        \SSS(v)[\ell_j]=W_i^{(C)}[\ell_j]+Z_j,\qquad
+        \SSS(v)[r_j]  =W_i^{(C)}[r_j]+\rho_{i,j}^d Z_j.
+    \]
+    For any inactive row $s$ (zero row in $\mathbf{B}_i$),
+    $v[s]=W_i^{(B)}[s]$ is constant, so $\SSS(v)[s]=W_i^{(C)}[s]$.
+    Defining $\mathbf{C}_i\in\FFF^{t\times k}$ by $\mathbf{C}_i[\ell_j,j]=1$,
+    $\mathbf{C}_i[r_j,j]=\rho_{i,j}^d$, and zero elsewhere:
+    \[
+        \SSS\bigl(\{W_i^{(B)}+\mathbf{B}_i\mathbf{Y}\}\bigr)
+        =\{W_i^{(C)}+\mathbf{C}_i\mathbf{Z}\}.
+    \]
+
+    \textit{Identification with $\mathbf{A}_{i+1}$.}
+    By $\SSS$-compatibility (Definition~3), any inactive row $s$ of $\mathbf{B}_i$
+    fixes coordinate $s$ under $\SSS$, so $\mathbf{A}_{i+1}[s,:]=\mathbf{0}$ for
+    all inactive~$s$.  Hence $\mathbf{A}_{i+1}$ has support only on $L_i\cup R_i$.
+    The matrix ratio condition~\eqref{eq:ratio} then gives
+    $\mathbf{A}_{i+1}[r_j,:]=\rho_{i,j}^d\mathbf{A}_{i+1}[\ell_j,:]$ for each~$j$,
+    which means $\mathrm{Im}(\mathbf{C}_i)=\mathrm{Im}(\mathbf{A}_{i+1})$.
+    Hence $\mathbf{C}_i=\mathbf{A}_{i+1}\mathbf{S}_i$ for an invertible
+    $\mathbf{S}_i\in\FFF^{k\times k}$; with $\mathbf{X}'=\mathbf{S}_i\mathbf{Z}$:
+    \[
+        \SSS\bigl(\{W_i^{(B)}+\mathbf{B}_i\mathbf{Y}\}\bigr)
+        =\{W_i^{(C)}+\mathbf{A}_{i+1}\mathbf{X}'\}.
+    \]
+
+    \textit{Round constant.}
+    Since $W_{i+1}^{(A)}=W_i^{(C)}+c_i$, the image after round~$i$ is
+    $\{W_{i+1}^{(A)}+\mathbf{A}_{i+1}\mathbf{X}'\}$, completing the induction.
+    Equation~\eqref{eq:skipping2} follows by taking $i=m$.
 \end{proof}
 
 \begin{corollary}[$\CICO$ degree reduction]\label{cor:cico}
@@ -333,13 +404,13 @@ this and Section~\ref{sec:bounds} derives tight bounds on how large $m$ can be.
 \begin{proof}
     By Theorem~\ref{thm:skipping}, the image of the input differential coset
     under the first $m$ rounds is the differential coset
-    $\{W_{m+1}^C + \mathbf{B}_{m+1}\cdot\mathbf{Y}\}_{\mathbf{Y}\in\FFF^t}$.
+    $\{W_{m+1}^{(A)} + \mathbf{A}_{m+1}\cdot\mathbf{X}'\}_{\mathbf{X}'\in\FFF^k}$.
     The remaining $s$ rounds are a polynomial map of degree $D$ applied to this
-    affine family; substituting the parameterization by $\mathbf{Y}$ turns the
-    $\CICO$ output constraints into polynomial equations in $\mathbf{Y}$ of
+    affine family; substituting the parameterization by $\mathbf{X}'$ turns the
+    $\CICO$ output constraints into polynomial equations in $\mathbf{X}'$ of
     degree at most $D$.
-    (The number of free variables equals the rank of $\mathbf{B}_{m+1}$, i.e.
-    the number of active positions of $\mathbf{A}_{m+1}$.)
+    (The number of free variables equals the rank of $\mathbf{A}_{m+1}$, i.e.
+    the number of active positions of $\mathbf{B}_{m+1}$.)
 \end{proof}
 
 \begin{lemma}[Zero rows and support of $M^{-1}$]\label{lem:branch}
