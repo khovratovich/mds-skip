@@ -65,3 +65,13 @@ Each entry records the user's command verbatim and a summary of the agent's resp
 
 ### [13] 2026-05-10 — "yes"
 **Action**: Phase 2 — expanded §2 Preliminaries into four subsections: §2.1 SPN Permutations (formal round diagram with A/B/C state notation); §2.2 CICO Problem (definition + role in Poseidon security + bounty context); §2.3 Poseidon1 (mixed-round structure, KoalaBear bounty parameters p=2130706433/d=3/t=16/R_F=8/R_P=20, scope paragraph); §2.4 MDS Matrices and Branch Number (two definitions: branch number and MDS; submatrix characterization; Cauchy and circulant constructions). Compiled cleanly.
+
+---
+
+### [14] 2026-05-10 — "yes, proceed"
+**Action**: Phase 3 — polished §3 Truncated Differentials and Skipping Trails. Added introductory paragraph explaining the three-layer structure of the formalism. Added Remark after Def 1 (row support vs. column space, rank). Added Remark after Def 2 characterizing the A→B condition as Im(MA)=Im(B) and noting that MDS forces equal rank. Fixed Def 5 (skipping trail): rewritten with clean grammar, labeled as \label{def:skipping-trail}, ratio condition labeled \label{eq:ratio}. Added §3.1 "A Worked Example: One-Round Skipping with Two Active Positions" (5 paragraphs: setup, ratio condition on center, propagation through S-box, skipping trail condition, summary linking to Theorem thm:skipping and Corollary cor:cico). Replaced old transition sentence with a cleaner bridge paragraph pointing to sec:bounds. Compiled cleanly.
+
+---
+
+### [15] 2026-05-10 — "We modify our results for MDS and other high-branch-number matrices: if matrix B has k zeros, then A cannot have fewer than t zeros, where t is a function of k and branch number b. This gives a lower bound on the number of active sboxes in a skipping trail"
+**Action**: Added Lemma 1 (lem:branch, "Branch-number constraint on truncated differentials") in sec:bounds before Proposition 1: for any truncated differential (A,B) with branch number b, n_A + n_B ≥ b. Equivalently, if B has k zero diagonal entries, A has at most 2t−b−k zero rows (at least b−t+k active positions); for MDS: at least k+1 active positions. Proof: any non-zero column v of A has wt(v) ≤ n_A and wt(Mv) ≤ n_B (by Im(B)), so branch number gives n_A + n_B ≥ b. Added Corollary 2 (cor:consecutive, "Consecutive active S-boxes"): in an m-round skipping trail, n_{B_i} + n_{B_{i+1}} ≥ b for all i; total active S-boxes ≥ ⌈mb/2⌉. Proof: S-compatibility gives n_{A_{i+1}} ≤ n_{B_i}, then apply lem:branch. Rewrote proof of Proposition 1 to cite cor:consecutive cleanly (removed informal argument). Added \newtheorem{lemma}{Lemma} to macro.tex. Labeled Prop 1 as \label{prop:even-m}. Fixed the cases→plain equation for eq:skipping3. Compiled cleanly.

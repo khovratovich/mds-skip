@@ -144,26 +144,59 @@ Both constructions achieve $b = t + 1$; the distinction becomes relevant in Sect
 \section{Truncated Differentials and Skipping Trails}
 \label{sec:trails}
 
+A round-skipping attack exploits the observation that a structured family of inputs
+---an affine coset---can be propagated through a sequence of SPN rounds while
+remaining an affine coset at the output.  The S-box layer is normally the obstacle:
+it maps an affine family to a non-affine image.  Our skipping trail framework
+identifies the precise algebraic condition on the differential matrices and the
+center of the coset that forces the S-box to collapse the coset back to a new affine
+family.  We build up the formalism in three layers: propagation through the linear
+layer (truncated differential), propagation through the S-box (S-compatibility),
+and the full multi-round structure (skipping trail).
 
 \begin{definition}
-    A set $\mathcal{W}\subseteq\FFF^t$ \emph{satisfies the matrix differential~$\mathbf{A}$}, centered at $W_0\in\FFF^t$, if
+    Let $1\leq k\leq t$.
+    A set $\mathcal{W}\subseteq\FFF^t$ \emph{satisfies the matrix differential~$\mathbf{A}$},
+    centered at $W_0\in\FFF^t$, if $\mathbf{A}\in\FFF^{t\times k}$ and
     \[
-        \mathcal{W} = \bigl\{\,W_0 + \mathbf{A}\cdot\mathbf{X} : \mathbf{X}\in\FFF^t\,\bigr\}.
+        \mathcal{W} = \bigl\{\,W_0 + \mathbf{A}\cdot\mathbf{X} : \mathbf{X}\in\FFF^k\,\bigr\}.
     \]
-    We call $\mathcal{W}$ a \emph{differential coset} of~$\mathbf{A}$.
+    We call $\mathcal{W}$ a \emph{differential coset} of~$\mathbf{A}$; the integer
+    $k$ is the \emph{width} of the differential and $\dim(\mathcal{W}) = \mathrm{rank}(\mathbf{A})$.
 \end{definition}
 
-\begin{definition}
-    A \emph{truncated differential} is a pair of matrices $(\mathbf{A},\mathbf{B})\in(\FFF^{t\times t})^2$ such that
-\begin{enumerate}
-    \item $\mathbf{A} \xrightarrow{\LLL}\mathbf{B}$, i.e.\ for every differential coset $\mathcal{W}$ of $\mathbf{A}$, its image $\LLL(\mathcal{W})$ is a differential coset of~$\mathbf{B}$;
-    \item Matrix $\mathbf{B}$ is diagonal.
-\end{enumerate}
-The indices $j$ with a non-zero $j$-th row of $\mathbf{A}$ (equivalently, non-zero $j$-th diagonal entry of $\mathbf{B}$) are called the \emph{active positions}.
-\end{definition}
+\begin{remark}
+    The matrix $\mathbf{A}\in\FFF^{t\times k}$ plays two roles: its \emph{row support}
+    (the set of indices $j$ with a non-zero $j$-th row) determines which state coordinates
+    are free, while the rank of $\mathbf{A}$ determines the dimension of the affine subspace.
+    Taking $k=t$ and $\mathbf{A}$ full-rank recovers the whole state space; taking $k=1$
+    gives an affine line.
+\end{remark}
 
 \begin{definition}
-    A diagonal matrix~$\mathbf{B}$ is \emph{$\SSS$-compatible} with a matrix~$\mathbf{A}'$
+    A \emph{truncated differential} of width $k$ is a pair $(\mathbf{A},\mathbf{B})$
+    with $\mathbf{A},\mathbf{B}\in\FFF^{t\times k}$ for some $1\leq k\leq t$ such that
+    \[
+        \mathbf{A} \xrightarrow{\LLL}\mathbf{B},
+        \quad\text{i.e.\ }\mathrm{Im}(M\mathbf{A}) = \mathrm{Im}(\mathbf{B}),
+    \]
+    where $M$ is the matrix of $\LLL$.
+    The indices $j$ with a non-zero $j$-th row of $\mathbf{B}$ are called the \emph{active positions}.
+\end{definition}
+
+\begin{remark}
+    The condition $\mathrm{Im}(M\mathbf{A}) = \mathrm{Im}(\mathbf{B})$ means that both
+    $M\mathbf{A}$ and $\mathbf{B}$ span the same $\mathrm{rank}(\mathbf{A})$-dimensional
+    coordinate subspace of $\FFF^t$.  For an MDS matrix $M$, the active positions of
+    $\mathbf{A}$ (non-zero rows) and of $\mathbf{B}$ must have the same count, both
+    equal to $\mathrm{rank}(\mathbf{A})$.
+    When $\mathbf{B}$ is chosen to be diagonal this recovers the classical formulation;
+    the general $\FFF^{t\times k}$ form allows a basis for the output subspace that need
+    not be aligned with coordinate axes.
+\end{remark}
+
+\begin{definition}
+    A matrix~$\mathbf{B}\in\FFF^{t\times k}$ is \emph{$\SSS$-compatible} with a matrix~$\mathbf{A}'\in\FFF^{t\times k'}$
     if there exist differential cosets $\mathcal{W}^{(B)}$ of~$\mathbf{B}$ and
     $\mathcal{W}^{(A)}$ of~$\mathbf{A}'$ such that
     \[
@@ -179,35 +212,112 @@ The indices $j$ with a non-zero $j$-th row of $\mathbf{A}$ (equivalently, non-ze
     $\mathbf{B}_i$ is $\SSS$-compatible with~$\mathbf{A}_{i+1}$.
 \end{definition}
 
- \begin{definition}   A $m$-round \emph{skipping  trail} is a $m+1$-round truncated differential   trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$,
-   where for every $i$ from $1$ to $m$,  there exists a decomposition
-   the active elements of $\mathbf{B}_i$ into two equally-sized groups $L_i$ and $R_i$, such that the trail,
-   now in the form $\{(\mathbf{A}_{i,L},\mathbf{A}_{i,R},\mathbf{B}_{i,L},\mathbf{B}_{i,R})\}_{i=1}^{m+1}$ satisfies the following conditions:
-   $$
-\frac{\mathbf{B}_{i,R}^d}{\mathbf{B}_{i,L}^d}\circ \mathbf{A}_{i+1,L} = \mathbf{A}_{i+1,R}
-    $$
-    where the division of diagonal matrices is defined as the element-wise division of the diagonal elements.
- \end{definition}
-With an $m$-round skipping trail, we can algebraically skip the first $m$ rounds of the SPN structure,
-and directly jump to the state after the $m$-th round. The following theorem formalizes this intuition.
+\begin{definition}\label{def:arity2}
+    A matrix $\mathbf{B}\in\FFF^{t\times k}$ is \emph{arity-2} if
+    \begin{itemize}
+        \item every column of $\mathbf{B}$ has exactly $2$ nonzero entries, and
+        \item every row of $\mathbf{B}$ has at most $1$ nonzero entry.
+    \end{itemize}
+    The two rows $\ell_j < r_j$ carrying the nonzero entries of column $j$ form a \emph{pair}; we write $L = \{\ell_1,\ldots,\ell_k\}$ and $R = \{r_1,\ldots,r_k\}$ for the resulting sets of left and right indices (disjoint by the row condition).
+\end{definition}
+
+\begin{definition}\label{def:skipping-trail}
+    An $m$-round \emph{skipping trail} is an $(m+1)$-round truncated differential
+    trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$ such that
+    \begin{enumerate}
+        \item for every $i$ from $1$ to $m$, $\mathbf{B}_i$ is arity-2, and
+        \item there exists a sequence of centers
+        $\{W_i^{(A)}, W_i^{(B)}, W_i^{(C)}\}_{i=1}^{m+1}$ propagating through the trail,
+        i.e.\ $W_i^{(B)} = M\,W_i^{(A)}$, $W_i^{(C)} = \SSS(W_i^{(B)})$, and
+        $W_{i+1}^{(A)} = W_i^{(C)} + c_i$ for round constants $c_i$.
+    \end{enumerate}
+\end{definition}
+\subsection{A Worked Example: $t=4$, $M=\mathrm{circ}(2,1,1,1)$}
+\label{sec:example}
+
+We exhibit a concrete 1-round skipping trail ($m=1$) for the circulant matrix
+\[
+    M = \mathrm{circ}(2,1,1,1) =
+    \begin{pmatrix}2&1&1&1\\1&2&1&1\\1&1&2&1\\1&1&1&2\end{pmatrix}, \quad t=4,\;k=1,\;d=3.
+\]
+
+\paragraph{Differential matrices.}
+Set $\mathbf{A}_1 = \mathbf{B}_1 = \mathbf{A}_2 = \mathbf{B}_2 = (0,1,-1,0)^T \in \FFF^{4\times 1}$.
+One checks directly that
+\[
+    M\,(0,1,-1,0)^T = (0\cdot 2+1\cdot 1+(-1)\cdot 1, \; 1\cdot 2+(-1)\cdot 1, \;
+                       1\cdot 1+(-1)\cdot 2, \; 1\cdot 1+(-1)\cdot 1)^T
+    = (0,1,-1,0)^T,
+\]
+so $\mathbf{A}$ is an eigenvector of $M$ with eigenvalue $1$.  Hence
+$\mathrm{Im}(M\mathbf{A}_1) = \mathrm{Im}(\mathbf{A}_1) = \mathrm{Im}(\mathbf{B}_1)$,
+confirming that $(\mathbf{A}_1, \mathbf{B}_1)$ is a valid truncated differential.
+
+\paragraph{Arity-2 check.}
+The single column of $\mathbf{B}_1=(0,1,-1,0)^T$ has exactly two nonzero entries (at positions
+$\ell=1$ and $r=2$ using 0-based indexing), and each row is nonzero in at most one column.
+Thus $\mathbf{B}_1$ is arity-2 with pair $(\ell,r)=(1,2)$.
+
+\paragraph{Ratio condition.}
+For $d=3$ and the pair $(\ell,r)=(1,2)$:
+\[
+    \left(\frac{\mathbf{B}_1[2,1]}{\mathbf{B}_1[1,1]}\right)^{\!3}\mathbf{A}_2[1,:]
+    = (-1)^3 \cdot 1 = -1 = \mathbf{A}_2[2,:]. \quad\checkmark
+\]
+
+\paragraph{Center constraint for $\SSS$-compatibility.}
+The input coset $\mathcal{W}^{(B)}_1 = \{W_0 + X(0,1,-1,0)^T : X\in\FFF\}$ has
+\[
+    (W_0[0],\; W_0[1]+X,\; W_0[2]-X,\; W_0[3]).
+\]
+After cubing coordinate-wise (with $u = W_0[1]+X$):
+\[
+    \bigl(W_0[0]^3,\;u^3,\;(W_0[2]-X)^3,\;W_0[3]^3\bigr).
+\]
+For the image to be a coset of $\mathbf{A}_2=(0,1,-1,0)^T$ we need $(W_0[2]-X)^3 = -u^3$ for all $X$.
+Setting $c = W_0[1]+W_0[2]$ gives $W_0[2]-X = c-u$, so $(c-u)^3=-u^3$ for all $u$ requires $c=0$, i.e.
+\[
+    W_0[1] + W_0[2] = 0.
+\]
+Under this constraint $(W_0[2]-X)^3 = (-u)^3 = -u^3$, and the output coset is
+\[
+    \bigl\{\,(W_0[0]^3,\;W_0[1]^3+Z,\;-W_0[1]^3-Z,\;W_0[3]^3)\,:\,Z\in\FFF\,\bigr\},
+\]
+which is a coset of $(0,1,-1,0)^T = \mathbf{A}_2$.  $\SSS$-compatibility is confirmed.
+
+\paragraph{Summary.}
+The sequence $(\mathbf{A}_1,\mathbf{B}_1)=(\mathbf{A}_2,\mathbf{B}_2)=(0,1,-1,0)^T$ forms
+a valid 1-round skipping trail.  Any center $W_0$ with $W_0[1]+W_0[2]=0$ satisfies
+the compatibility condition, leaving the values $W_0[0], W_0[1], W_0[3]$ free.
+By Theorem~\ref{thm:skipping}, the affine line
+$\{W_0 + X(0,1,-1,0)^T\}$ maps through one full round to another affine line,
+reducing the $\CICO$ problem to a univariate system over the remaining rounds
+(Corollary~\ref{cor:cico}).
+
+\medskip
+
+With an $m$-round skipping trail we can algebraically bypass the first $m$ full rounds
+of the SPN, reducing the effective $\CICO$ instance. The following theorem formalizes
+this and Section~\ref{sec:bounds} derives tight bounds on how large $m$ can be.
 \section{Theoretical Bounds on Round Skipping}
 \label{sec:bounds}
 
 \begin{theorem}\label{thm:skipping}
-    Suppose there is a $m$-round skipping trail such that for some subset $I$ of state elements we have $A_1[I,*]=\mathbf{0}$, and
-     the total number of active elements
-     is $k<2t$. If there exists a sequence of states $\{W_i^{A,B,C}\}_{i=1}^{m+1}$ such that for every $i$ from $1$ to $m$ we have
-    \begin{equation}
-        \mathbf{B}_{i,L}\cdot W_{i,R}^{(B)} = \mathbf{B}_{i,R}\cdot W_{i,L}^{(B)}\label{eq:skipping}
+    Let $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$ be an $m$-round skipping trail
+    with propagating centers $\{W_i^{(A)},W_i^{(B)},W_i^{(C)}\}$.
+    Suppose that for every $i$ from $1$ to $m$, for every column $j$ of $\mathbf{B}_i$
+    with arity-2 pair $(\ell_j,r_j)$, the following \emph{ratio condition} holds:
+    \begin{equation}\label{eq:ratio}
+        \left(\frac{\mathbf{B}_i[r_j,j]}{\mathbf{B}_i[\ell_j,j]}\right)^{\!d}
+        \mathbf{A}_{i+1}[\ell_j,\,:] \;=\; \mathbf{A}_{i+1}[r_j,\,:].
     \end{equation}
-    Then the truncated differential trail $\{(\mathbf{A}_i,\mathbf{B}_i)\}_{i=1}^{m+1}$ is a valid truncated differential trail,
-    and the probability of the truncated differential is at least $p^{-k/2}$. Moreover,   it holds
+    Then it holds that
     \begin{equation}
-        \{\PPP^m(W_1^A+\mathbf{A}_1\cdot\mathbf{X})\}_{\mathbf{X}\in\FFF^t} =  \{W_{m+1}^C+\mathbf{B}_{m+1}\cdot\mathbf{Y}\}_{\mathbf{Y\in\FFF^t}}\label{eq:skipping2}
+        \{\PPP^m(W_1^{(A)}+\mathbf{A}_1\cdot\mathbf{X})\}_{\mathbf{X}\in\FFF^k} =  \{W_{m+1}^{(C)}+\mathbf{B}_{m+1}\cdot\mathbf{Y}\}_{\mathbf{Y}\in\FFF^k}\label{eq:skipping2}
     \end{equation}
 \end{theorem}
 \begin{proof}
-    TODO (just apply the definition of skipping trail and the condition \ref{eq:skipping} to get \ref{eq:skipping2}).
+    TODO (apply the definition of skipping trail and the ratio condition~\eqref{eq:ratio} to get~\eqref{eq:skipping2}).
 \end{proof}
 
 \begin{corollary}[$\CICO$ degree reduction]\label{cor:cico}
@@ -232,26 +342,65 @@ and directly jump to the state after the $m$-th round. The following theorem for
     the number of active positions of $\mathbf{A}_{m+1}$.)
 \end{proof}
 
-\begin{proposition}
- A sequence of states satisfying an $m$-round skipping trail exists only if the branch number $b$ of the linear transformation $\LLL$ satisfies the following condition:
-\begin{equation}
-    \begin{cases}
-b\leq \frac{4t}{m},\text{ for } m \text{ even}  \end{cases}  \label{eq:skipping3}
-\end{equation}\end{proposition}
+\begin{lemma}[Zero rows and support of $M^{-1}$]\label{lem:branch}
+    Let $(\mathbf{A},\mathbf{B})$ be a truncated differential for a linear layer $\LLL$ with matrix $M$.
+    Suppose $\mathbf{B}$ is diagonal with $k$ zeros. Then any zero row of $\mathbf{A}$ corresponds to a row of $M^{-1}$ with at least $t-k$ zeros in the positions where $\mathbf{B}$ is nonzero.
+    In particular, the number of zero rows in $\mathbf{A}$ is at most the number of rows of $M^{-1}$ with support contained in the zero pattern of $\mathbf{B}$.
+    For an MDS matrix, all rows of $M^{-1}$ are fully dense, so $\mathbf{A}$ can have at most $k$ zero rows.
+\end{lemma}
 \begin{proof}
-    Suppose there is a sequence of states $\{W_i^{A,B,C}\}_{i=1}^{m+1}$ satisfying the condition \ref{eq:skipping}. Then for every $i$ from $1$ to $m$ we have
-    \begin{equation}
-        \mathbf{B}_{i,L}\cdot W_{i,R}^{(B)} = \mathbf{B}_{i,R}\cdot W_{i,L}^{(B)}\label{eq:skipping-state}
+    Since $\mathbf{A} = M^{-1}\mathbf{B}$, the $i$-th row of $\mathbf{A}$ is $e_i^T M^{-1} \mathbf{B}$, where $e_i$ is the $i$-th standard basis vector.
+    If $\mathbf{A}_{i,*} = 0$, then $e_i^T M^{-1} \mathbf{B} = 0$, i.e., the $i$-th row of $M^{-1}$ is supported only on the zero coordinates of $\mathbf{B}$ (since multiplying by a nonzero diagonal entry would yield a nonzero entry).
+    Thus, for each zero row in $\mathbf{A}$, the corresponding row of $M^{-1}$ has support contained in the zero pattern of $\mathbf{B}$, i.e., at least $t-k$ zeros in the nonzero positions of $\mathbf{B}$.
+    For MDS, all rows of $M^{-1}$ are fully dense, so this is only possible if the row is multiplied by all zeros in $\mathbf{B}$, i.e., at most $k$ zero rows in $\mathbf{A}$.
+\end{proof}
+
+\begin{remark}
+    This lemma refines the branch-number argument: for MDS matrices, the only way for $\mathbf{A}$ to have a zero row is for $\mathbf{B}$ to have a zero in the same position. For non-MDS matrices, the structure of $M^{-1}$ can allow more zero rows in $\mathbf{A}$ if $M^{-1}$ has sparse rows aligned with the zero pattern of $\mathbf{B}$.
+\end{remark}
+
+\begin{corollary}[Consecutive active S-boxes]\label{cor:consecutive}
+    In an $m$-round skipping trail with linear layer of branch number $b$, for all
+    $i\in\{1,\ldots,m\}$,
+    \begin{equation}\label{eq:consecutive}
+        n_{B_i} + n_{B_{i+1}} \geq b,
     \end{equation}
-    Denote the number of active elements in $\mathbf{B}_i$ by $k_i$. A satisfying sequence of states can exist only
-    if $$
-    \sum_i k_i/2    \leq t.
-    $$
-    On the other hand, any pair of states satisfying a truncated differential also satisfies a regular differential trail with at most
-    the same number of active elements. Therefore, we must have $k_i+k_{i+1}\geq b$ for every $i$ from $1$ to $m-1$. Combining these two inequalities we get for even $m$:
-    $$
-    t \geq \sum_i k_i/2 \geq \frac{m}{4}b
-    $$
+    where $n_{B_j}$ denotes the number of active positions of $\mathbf{B}_j$.
+    In particular, the total number of active S-box applications satisfies
+    \[
+        \sum_{i=1}^{m} n_{B_i} \;\geq\; \left\lceil \frac{mb}{2} \right\rceil.
+    \]
+\end{corollary}
+\begin{proof}
+    S-compatibility (Definition~3) forces the active positions of $\mathbf{A}_{i+1}$
+    to be a subset of those of $\mathbf{B}_i$, giving $n_{A_{i+1}}\leq n_{B_i}$.
+    Lemma~\ref{lem:branch} applied to $(\mathbf{A}_{i+1},\mathbf{B}_{i+1})$ gives
+    $n_{A_{i+1}}+n_{B_{i+1}}\geq b$, hence $n_{B_i}+n_{B_{i+1}}\geq b$.
+    For even $m$, pairing consecutive rounds and summing yields
+    $\sum_{i=1}^{m} n_{B_i}\geq (m/2)b$.
+\end{proof}
+
+\begin{proposition}\label{prop:even-m}
+\begin{equation}
+    b\leq \frac{4t}{m} \quad (m \text{ even})  \label{eq:skipping3}
+\end{equation}
+\end{proposition}
+\begin{proof}
+    Denote by $n_{B_i}$ the number of active positions of $\mathbf{B}_i$.
+    The skipping trail condition (Definition~\ref{def:skipping-trail}) partitions
+    the active positions of each $\mathbf{B}_i$ evenly into $L_i$ and $R_i$, so
+    at most $\sum_i n_{B_i}/2$ independent degrees of freedom are introduced;
+    since these must fit in an $t$-dimensional state space,
+    \begin{equation}\label{eq:total-active}
+        \sum_{i=1}^{m} n_{B_i} \leq 2t.
+    \end{equation}
+    By Corollary~\ref{cor:consecutive}, $n_{B_i}+n_{B_{i+1}}\geq b$ for all $i$.
+    For even $m$, pairing consecutive terms gives $\sum_{i=1}^{m} n_{B_i}\geq (m/2)b$.
+    Combining with~\eqref{eq:total-active}:
+    \[
+        \frac{m}{2}\,b \;\leq\; \sum_{i=1}^{m} n_{B_i} \;\leq\; 2t,
+    \]
+    which yields $b\leq 4t/m$.
 \end{proof}
 
 
